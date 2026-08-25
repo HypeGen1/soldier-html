@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Soldier — White Void</title>
+<style>
+  html, body { margin: 0; padding: 0; overflow: hidden; background: #ffffff; height: 100%; }
+  canvas { display: block; }
+
+  #hud {
+    position: fixed;
+    top: 16px; left: 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #222;
+    background: rgba(255,255,255,0.85);
+    border: 1px solid #ccc;
+    padding: 10px 14px;
+    line-height: 1.6;
+    letter-spacing: 0.5px;
+    pointer-events: none;
+    user-select: none;
+    z-index: 20;
+  }
+  #hud b { color: #000; }
+
+  #uniformSelect {
+    position: fixed;
+    top: 16px; right: 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #222;
+    background: rgba(255,255,255,0.85);
+    border: 1px solid #ccc;
+    padding: 8px 12px;
+    line-height: 1.4;
+    pointer-events: auto;
+    user-select: none;
+    z-index: 20;
+    cursor: pointer;
+  }
+  #uniformSelect button {
+    display: block;
+    margin: 4px 0;
+    padding: 4px 8px;
+    background: #f0f0f0;
+    border: 1px solid #999;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+  }
+  #uniformSelect button:hover { background: #e0e0e0; }
+  #uniformSelect button.active { background: #4CAF50; color: #fff; }
+
+  #crosshair {
+    position: fixed;
+    top: 50%; left: 50%;
+    width: 6px; height: 6px;
+    margin: -3px 0 0 -3px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.35);
+    pointer-events: none;
+  }
+
+  #clickCatcher {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.9);
+    font-family: 'Courier New', monospace;
+    color: #333;
+    font-size: 14px;
+    cursor: pointer;
+    z-index: 10;
+    text-align: center;
+  }
+  #clickCatcher.hidden { display: none; }
+
+  /* Mobile controls */
+  #mobileControls {
+    display: none;
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    font-family: 'Courier New', monospace;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  #mobileControls.active { display: block; }
+
+  #joystickZone {
+    position: fixed;
+    left: 24px; bottom: 24px;
+    width: 130px; height: 130px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.08);
+    border: 1px solid rgba(0,0,0,0.25);
+    pointer-events: auto;
+    touch-action: none;
+  }
+  #joystickStick {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 54px; height: 54px;
+    margin: -27px 0 0 -27px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.35);
+    pointer-events: none;
+  }
+
+  #lookZone {
+    position: fixed;
+    right: 0; top: 0;
+    width: 55%; height: 100%;
+    pointer-events: auto;
+    touch-action: none;
+  }
+
+  .mobileBtn {
+    position: fixed;
+    pointer-events: auto;
+    touch-action: none;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.12);
+    border: 1px solid rgba(0,0,0,0.25);
+    color: #222;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0.5px;
+    font-weight: bold;
+  }
+  .mobileBtn:active { background: rgba(0,0,0,0.28); }
+
+  #jumpBtn {
+    right: 24px; bottom: 30px;
+    width: 74px; height: 74px;
+    background: rgba(100,180,80,0.15);
+    border-color: rgba(100,180,80,0.35);
+    color: #2d5a1a;
+  }
+  #jumpBtn:active { background: rgba(100,180,80,0.32); }
+
+  #sprintBtn {
+    right: 110px; bottom: 30px;
+    width: 74px; height: 74px;
+    background: rgba(100,140,200,0.15);
+    border-color: rgba(100,140,200,0.35);
+    color: #1a3a5a;
+  }
+  #sprintBtn:active { background: rgba(100,140,200,0.32); }
+
+  #fireBtn {
+    right: 24px; bottom: 116px;
+    width: 80px; height: 80px;
+    background: rgba(180,40,30,0.18);
+    border-color: rgba(180,40,30,0.4);
+    color: #7a1f16;
+    font-size: 12px;
+  }
+  #fireBtn:active { background: rgba(180,40,30,0.35); }
+
+  #mobileHint {
+    position: fixed;
+    top: 16px; right: 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: #666;
+    background: rgba(255,255,255,0.85);
+    border: 1px solid #ccc;
+    padding: 6px 10px;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div id="hud">
+  <b>WASD</b> move &nbsp; <b>SHIFT</b> sprint &nbsp; <b>SPACE</b> jump<br>
+  <b>MOUSE</b> look &nbsp; <b>RIGHT-CLICK</b> fire &nbsp; <b>ESC</b> release cursor<br>
+  <span style="color:#999;">(touch: joystick + drag to look + buttons)</span>
+</div>
+
+<div id="uniformSelect">
+  <div style="margin-bottom: 6px; font-weight: bold; font-size: 10px;">UNIFORM</div>
+  <button class="active" data-uniform="0">Standard</button>
+  <button data-uniform="1">Armored</button>
+  <button data-uniform="2">Officer</button>
+</div>
+
+<div id="crosshair"></div>
+<div id="clickCatcher">click to enter<br><span style="font-size:11px;color:#888;">(pointer lock — mouse controls camera)</span></div>
+
+<div id="mobileControls">
+  <div id="joystickZone"><div id="joystickStick"></div></div>
+  <div id="lookZone"></div>
+  <div id="jumpBtn" class="mobileBtn">JUMP</div>
+  <div id="sprintBtn" class="mobileBtn">SPRINT</div>
+  <div id="fireBtn" class="mobileBtn">FIRE</div>
+  <div id="mobileHint">drag right side to look</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ============================================================================
+// SCENE / RENDERER / CAMERA
+// ============================================================================
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xffffff);
+scene.fog = new THREE.Fog(0xffffff, 20, 90);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ============================================================================
+// LIGHTING
+// ============================================================================
+const hemi = new THREE.HemisphereLight(0xffffff, 0xdddddd, 0.9);
+scene.add(hemi);
+
+const sun = new THREE.DirectionalLight(0xffffff, 0.9);
+sun.position.set(15, 25, 10);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = -30;
+sun.shadow.camera.right = 30;
+sun.shadow.camera.top = 30;
+sun.shadow.camera.bottom = -30;
+sun.shadow.camera.far = 80;
+sun.shadow.bias = -0.0015;
+scene.add(sun);
+
+// ============================================================================
+// GROUND — fading grid for depth cue
+// ============================================================================
+const groundGeo = new THREE.PlaneGeometry(400, 400);
+const groundMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, metalness: 0 });
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+const grid = new THREE.GridHelper(400, 160, 0xe4e4e4, 0xeeeeee);
+grid.position.y = 0.01;
+// Custom material for grid to fade with distance
+const gridMat = grid.material.clone();
+gridMat.fog = true;
+grid.material = gridMat;
+scene.add(grid);
+
+// ============================================================================
+// SOLDIER — multiple uniform variants
+// ============================================================================
+const palette = {
+  skin:    0xC79A78,
+  
+  // Variant 0: Standard (olive drab)
+  standard: {
+    uniform: 0x4B5320,
+    uniformDark: 0x3A4119,
+    helmet: 0x39421C,
+    webgear: 0x2E2E2E,
+    boots: 0x1C1C1C,
+  },
+  
+  // Variant 1: Armored (darker, more equipment)
+  armored: {
+    uniform: 0x2a2f1f,
+    uniformDark: 0x1f2415,
+    helmet: 0x1a1f0f,
+    webgear: 0x1a1a1a,
+    boots: 0x0f0f0f,
+  },
+  
+  // Variant 2: Officer (lighter, higher rank insignia)
+  officer: {
+    uniform: 0x5a6030,
+    uniformDark: 0x464b20,
+    helmet: 0x4a5224,
+    webgear: 0x3a3a3a,
+    boots: 0x2a2a2a,
+  },
+  
+  metal: 0x555555,
+};
+
+let currentUniformVariant = 0;
+let soldier = null;
+let torso = null;
+let headGroup = null;
+let armL = null, armR = null;
+let legL = null, legR = null;
+let legLLower = null, legRLower = null;
+let rifle = null;
+let muzzleFlash = null;
+
+function box(w, h, d, color, castShadow = true) {
+  const geo = new THREE.BoxGeometry(w, h, d);
+  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.85, metalness: 0.05 });
+  const m = new THREE.Mesh(geo, mat);
+  m.castShadow = castShadow;
+  m.receiveShadow = true;
+  return m;
+}
+
+function createSoldier(uniformVariant = 0) {
+  // Remove old soldier if it exists
+  if (soldier) scene.remove(soldier);
+  
+  const colors = palette[['standard', 'armored', 'officer'][uniformVariant]];
+  
+  soldier = new THREE.Group();
+
+  // Torso
+  const chest = box(0.46, 0.34, 0.26, colors.uniform);
+  chest.position.y = 1.22;
+  soldier.add(chest);
+
+  const waist = box(0.4, 0.26, 0.24, colors.uniform);
+  waist.position.y = 0.94;
+  soldier.add(waist);
+
+  torso = chest;
+
+  // Chest webgear straps
+  const strapL = box(0.05, 0.36, 0.03, colors.webgear);
+  strapL.position.set(-0.09, 1.24, 0.13);
+  strapL.rotation.z = 0.3;
+  soldier.add(strapL);
+  
+  const strapR = box(0.05, 0.36, 0.03, colors.webgear);
+  strapR.position.set(0.09, 1.24, 0.13);
+  strapR.rotation.z = -0.3;
+  soldier.add(strapR);
+
+  // Belt
+  const belt = box(0.42, 0.08, 0.26, colors.webgear);
+  belt.position.y = 0.81;
+  soldier.add(belt);
+  
+  // Pouch (variant detail)
+  if (uniformVariant === 1) {
+    const pouch = box(0.08, 0.12, 0.08, colors.webgear);
+    pouch.position.set(0.15, 0.78, 0.12);
+    soldier.add(pouch);
+  }
+
+  // Head group
+  headGroup = new THREE.Group();
+  headGroup.position.y = 1.52;
+  soldier.add(headGroup);
+
+  // Neck
+  const neck = box(0.14, 0.22, 0.14, palette.skin);
+  neck.position.y = -0.08;
+  headGroup.add(neck);
+
+  const head = box(0.24, 0.26, 0.24, palette.skin);
+  head.position.y = 0.21;
+  headGroup.add(head);
+
+  const jaw = box(0.2, 0.08, 0.22, palette.skin);
+  jaw.position.y = 0.09;
+  headGroup.add(jaw);
+
+  // Helmet with chinstrap detail
+  const helmet = box(0.29, 0.15, 0.28, colors.helmet);
+  helmet.position.y = 0.33;
+  headGroup.add(helmet);
+
+  const helmetBrim = box(0.31, 0.035, 0.32, colors.helmet);
+  helmetBrim.position.y = 0.26;
+  headGroup.add(helmetBrim);
+  
+  // Chin strap detail (variant)
+  if (uniformVariant >= 1) {
+    const chinStrap = box(0.05, 0.04, 0.24, colors.webgear);
+    chinStrap.position.set(0, 0.07, 0.13);
+    headGroup.add(chinStrap);
+  }
+
+  // Arms
+  function makeArm(side) {
+    const pivot = new THREE.Group();
+    pivot.position.set(side * 0.27, 1.38, 0);
+
+    const upper = box(0.13, 0.3, 0.15, colors.uniform);
+    upper.position.y = -0.15;
+    pivot.add(upper);
+
+    const lowerPivot = new THREE.Group();
+    lowerPivot.position.y = -0.3;
+    pivot.add(lowerPivot);
+
+    const lower = box(0.12, 0.28, 0.14, colors.uniformDark);
+    lower.position.y = -0.14;
+    lowerPivot.add(lower);
+
+    const hand = box(0.1, 0.1, 0.11, palette.skin);
+    hand.position.y = -0.3;
+    lowerPivot.add(hand);
+
+    const gripPoint = new THREE.Group();
+    gripPoint.position.y = -0.3;
+    lowerPivot.add(gripPoint);
+
+    pivot.kneePivot = lowerPivot;
+    pivot.gripPoint = gripPoint;
+    return pivot;
+  }
+
+  armL = makeArm(-1);
+  armR = makeArm(1);
+  soldier.add(armL, armR);
+
+  // Legs
+  function makeLeg(side) {
+    const pivot = new THREE.Group();
+    pivot.position.set(side * 0.13, 0.81, 0);
+
+    const upper = box(0.15, 0.42, 0.17, colors.uniformDark);
+    upper.position.y = -0.21;
+    pivot.add(upper);
+
+    const lowerPivot = new THREE.Group();
+    lowerPivot.position.y = -0.42;
+    pivot.add(lowerPivot);
+
+    const lower = box(0.13, 0.4, 0.15, colors.uniform);
+    lower.position.y = -0.2;
+    lowerPivot.add(lower);
+
+    const boot = box(0.155, 0.12, 0.24, colors.boots);
+    boot.position.set(0, -0.46, 0.03);
+    lowerPivot.add(boot);
+
+    pivot.kneePivot = lowerPivot;
+    return pivot;
+  }
+
+  legL = makeLeg(-1);
+  legR = makeLeg(1);
+  legLLower = legL.kneePivot;
+  legRLower = legR.kneePivot;
+  soldier.add(legL, legR);
+
+  // Rifle — proper submachine gun stance
+  rifle = new THREE.Group();
+
+  const barrel = box(0.045, 0.045, 0.32, palette.metal);
+  barrel.position.set(0, 0.05, 0.34);
+  rifle.add(barrel);
+
+  const receiver = box(0.07, 0.09, 0.26, 0x2b2b2b);
+  receiver.position.set(0, 0.05, 0.06);
+  rifle.add(receiver);
+
+  const magazine = box(0.045, 0.22, 0.05, 0x1f1f1f);
+  magazine.position.set(0, -0.12, 0.12);
+  magazine.rotation.x = 0.12;
+  rifle.add(magazine);
+
+  const pistolGrip = box(0.05, 0.13, 0.05, 0x1f1f1f);
+  pistolGrip.position.set(0, -0.03, -0.02);
+  pistolGrip.rotation.x = -0.35;
+  rifle.add(pistolGrip);
+
+  const stockBar = box(0.03, 0.03, 0.26, 0x555555);
+  stockBar.position.set(0, 0.02, -0.2);
+  rifle.add(stockBar);
+  
+  const stockPlate = box(0.03, 0.1, 0.03, 0x555555);
+  stockPlate.position.set(0, -0.03, -0.33);
+  rifle.add(stockPlate);
+
+  // Muzzle flash with better glow
+  muzzleFlash = box(0.14, 0.14, 0.06, 0xffdd55, false);
+  muzzleFlash.material.transparent = true;
+  muzzleFlash.material.opacity = 0.95;
+  muzzleFlash.material.emissive = new THREE.Color(0xffaa00);
+  muzzleFlash.material.emissiveIntensity = 2.0;
+  muzzleFlash.position.set(0, 0.05, 0.52);
+  muzzleFlash.visible = false;
+  rifle.add(muzzleFlash);
+
+  // Rifle positioning — corrected for proper aiming stance
+  rifle.position.set(0.02, -0.02, 0.04);
+  rifle.rotation.set(0.1, -0.05, 0.13); // Much flatter — barrel points forward
+  armR.gripPoint.add(rifle);
+
+  // Right arm: weapon-ready grip (raised, stock against shoulder)
+  armR.rotation.set(-1.85, 0.1, 0.1);
+  armR.kneePivot.rotation.set(0.35, 0, 0);
+
+  // Left arm: foregrip, extended forward and slightly down
+  armL.rotation.set(-1.8, -0.15, -0.15);
+  armL.kneePivot.rotation.set(0.15, 0, 0);
+
+  soldier.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  soldier.position.set(0, 0, 0);
+  scene.add(soldier);
+
+  // Contact shadow
+  const shadowBlobGeo = new THREE.CircleGeometry(0.4, 24);
+  const shadowBlobMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.18 });
+  const shadowBlob = new THREE.Mesh(shadowBlobGeo, shadowBlobMat);
+  shadowBlob.rotation.x = -Math.PI / 2;
+  shadowBlob.position.y = 0.015;
+  soldier.add(shadowBlob);
+}
+
+// Create initial soldier
+createSoldier(0);
+
+// ============================================================================
+// UNIFORM SELECTOR UI
+// ============================================================================
+document.querySelectorAll('#uniformSelect button').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    document.querySelectorAll('#uniformSelect button').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    currentUniformVariant = parseInt(e.target.dataset.uniform);
+    createSoldier(currentUniformVariant);
+  });
+});
+
+// ============================================================================
+// THIRD-PERSON CAMERA RIG
+// ============================================================================
+let yaw = 0;
+let pitch = 0.35;
+const PITCH_MIN = 0.08;
+const PITCH_MAX = 1.3;
+const CAM_DISTANCE = 4.2;
+const CAM_HEIGHT_OFFSET = 1.1;
+
+function updateCamera() {
+  const dist = CAM_DISTANCE;
+  const camX = soldier.position.x - Math.sin(yaw) * Math.cos(pitch) * dist;
+  const camZ = soldier.position.z - Math.cos(yaw) * Math.cos(pitch) * dist;
+  const camY = soldier.position.y + CAM_HEIGHT_OFFSET + Math.sin(pitch) * dist;
+  camera.position.set(camX, camY, camZ);
+  camera.lookAt(
+    soldier.position.x,
+    soldier.position.y + 1.0,
+    soldier.position.z
+  );
+}
+updateCamera();
+
+// ============================================================================
+// POINTER LOCK + MOUSE LOOK
+// ============================================================================
+const clickCatcher = document.getElementById('clickCatcher');
+const canvas = renderer.domElement;
+
+clickCatcher.addEventListener('click', () => {
+  canvas.requestPointerLock();
+});
+
+document.addEventListener('pointerlockchange', () => {
+  if (document.pointerLockElement === canvas) {
+    clickCatcher.classList.add('hidden');
+  } else {
+    clickCatcher.classList.remove('hidden');
+  }
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (document.pointerLockElement !== canvas) return;
+  yaw -= e.movementX * 0.0025;
+  pitch += e.movementY * 0.0025;
+  pitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, pitch));
+});
+
+// ============================================================================
+// INPUT STATE
+// ============================================================================
+const keys = {};
+window.addEventListener('keydown', (e) => { keys[e.code] = true; });
+window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+let touchMoveX = 0;
+let touchMoveZ = 0;
+
+// ============================================================================
+// MOBILE / TOUCH CONTROLS
+// ============================================================================
+const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+
+if (isTouchDevice) {
+  const mobileControls = document.getElementById('mobileControls');
+  mobileControls.classList.add('active');
+  clickCatcher.classList.add('hidden');
+
+  // Virtual joystick
+  const joystickZone = document.getElementById('joystickZone');
+  const joystickStick = document.getElementById('joystickStick');
+  let joystickTouchId = null;
+  let joystickCenter = { x: 0, y: 0 };
+  const JOYSTICK_RADIUS = 55;
+
+  function joystickStart(e) {
+    const touch = e.changedTouches[0];
+    joystickTouchId = touch.identifier;
+    const rect = joystickZone.getBoundingClientRect();
+    joystickCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    e.preventDefault();
+  }
+  function joystickMove(e) {
+    for (const touch of e.changedTouches) {
+      if (touch.identifier !== joystickTouchId) continue;
+      let dx = touch.clientX - joystickCenter.x;
+      let dy = touch.clientY - joystickCenter.y;
+      const dist = Math.min(Math.hypot(dx, dy), JOYSTICK_RADIUS);
+      const angle = Math.atan2(dy, dx);
+      const clampedX = Math.cos(angle) * dist;
+      const clampedY = Math.sin(angle) * dist;
+      joystickStick.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
+      touchMoveX = clampedX / JOYSTICK_RADIUS;
+      touchMoveZ = clampedY / JOYSTICK_RADIUS;
+      e.preventDefault();
+    }
+  }
+  function joystickEnd(e) {
+    for (const touch of e.changedTouches) {
+      if (touch.identifier !== joystickTouchId) continue;
+      joystickTouchId = null;
+      touchMoveX = 0;
+      touchMoveZ = 0;
+      joystickStick.style.transform = 'translate(0px, 0px)';
+    }
+  }
+  joystickZone.addEventListener('touchstart', joystickStart, { passive: false });
+  joystickZone.addEventListener('touchmove', joystickMove, { passive: false });
+  joystickZone.addEventListener('touchend', joystickEnd, { passive: false });
+  joystickZone.addEventListener('touchcancel', joystickEnd, { passive: false });
+
+  // Look zone
+  const lookZone = document.getElementById('lookZone');
+  let lookTouchId = null;
+  let lastLookX = 0, lastLookY = 0;
+
+  lookZone.addEventListener('touchstart', (e) => {
+    const touch = e.changedTouches[0];
+    lookTouchId = touch.identifier;
+    lastLookX = touch.clientX;
+    lastLookY = touch.clientY;
+    e.preventDefault();
+  }, { passive: false });
+
+  lookZone.addEventListener('touchmove', (e) => {
+    for (const touch of e.changedTouches) {
+      if (touch.identifier !== lookTouchId) continue;
+      const dx = touch.clientX - lastLookX;
+      const dy = touch.clientY - lastLookY;
+      lastLookX = touch.clientX;
+      lastLookY = touch.clientY;
+      yaw -= dx * 0.005;
+      pitch += dy * 0.005;
+      pitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, pitch));
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  lookZone.addEventListener('touchend', (e) => {
+    for (const touch of e.changedTouches) {
+      if (touch.identifier === lookTouchId) lookTouchId = null;
+    }
+  }, { passive: false });
+
+  // Buttons
+  const jumpBtn = document.getElementById('jumpBtn');
+  jumpBtn.addEventListener('touchstart', (e) => { keys['Space'] = true; e.preventDefault(); }, { passive: false });
+  jumpBtn.addEventListener('touchend', (e) => { keys['Space'] = false; e.preventDefault(); }, { passive: false });
+
+  const sprintBtn = document.getElementById('sprintBtn');
+  sprintBtn.addEventListener('touchstart', (e) => { keys['ShiftLeft'] = true; e.preventDefault(); }, { passive: false });
+  sprintBtn.addEventListener('touchend', (e) => { keys['ShiftLeft'] = false; e.preventDefault(); }, { passive: false });
+}
+
+// ============================================================================
+// FIRING SYSTEM — with weapon recoil
+// ============================================================================
+let firing = false;
+const FIRE_RATE = 0.09;
+let fireCooldown = 0;
+let recoilAmount = 0; // recoil impulse that decays
+
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+canvas.addEventListener('mousedown', (e) => {
+  if (e.button === 2) firing = true;
+});
+window.addEventListener('mouseup', (e) => {
+  if (e.button === 2) firing = false;
+});
+
+if (isTouchDevice) {
+  const fireBtn = document.getElementById('fireBtn');
+  fireBtn.addEventListener('touchstart', (e) => { firing = true; e.preventDefault(); }, { passive: false });
+  fireBtn.addEventListener('touchend', (e) => { firing = false; e.preventDefault(); }, { passive: false });
+  fireBtn.addEventListener('touchcancel', (e) => { firing = false; e.preventDefault(); }, { passive: false });
+}
+
+// Tracers with improved geometry
+const activeTracers = [];
+function spawnTracer() {
+  const muzzleWorldPos = new THREE.Vector3();
+  muzzleFlash.getWorldPosition(muzzleWorldPos);
+
+  const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(rifle.getWorldQuaternion(new THREE.Quaternion()));
+  const jitter = 0.01;
+  forward.x += (Math.random() - 0.5) * jitter;
+  forward.y += (Math.random() - 0.5) * jitter;
+
+  // Better tracer: thin box instead of cylinder
+  const tracerGeo = new THREE.BoxGeometry(0.016, 0.016, 0.5);
+  const tracerMat = new THREE.MeshBasicMaterial({ color: 0xfff2b0, transparent: true, opacity: 0.9 });
+  const tracer = new THREE.Mesh(tracerGeo, tracerMat);
+
+  tracer.position.copy(muzzleWorldPos).addScaledVector(forward, 0.25);
+  tracer.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), forward);
+
+  scene.add(tracer);
+  activeTracers.push({ mesh: tracer, dir: forward.clone(), life: 0 });
+}
+
+function updateTracers(dt) {
+  for (let i = activeTracers.length - 1; i >= 0; i--) {
+    const t = activeTracers[i];
+    t.life += dt;
+    t.mesh.position.addScaledVector(t.dir, 40 * dt);
+    t.mesh.material.opacity = Math.max(0, 0.9 - t.life * 3);
+    if (t.life > 0.3) {
+      scene.remove(t.mesh);
+      t.mesh.geometry.dispose();
+      t.mesh.material.dispose();
+      activeTracers.splice(i, 1);
+    }
+  }
+}
+
+let muzzleFlashTimer = 0;
+const WALK_SPEED = 3.2;
+const SPRINT_SPEED = 6.0;
+const GRAVITY = -18;
+const JUMP_SPEED = 6.2;
+
+let velocityY = 0;
+let grounded = true;
+let strideCycle = 0;
+let landingSquat = 0;
+
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+
+  // Movement input
+  let moveX = 0, moveZ = 0;
+  if (keys['KeyW']) moveZ -= 1;
+  if (keys['KeyS']) moveZ += 1;
+  if (keys['KeyA']) moveX -= 1;
+  if (keys['KeyD']) moveX += 1;
+
+  moveX = Math.max(-1, Math.min(1, moveX + touchMoveX));
+  moveZ = Math.max(-1, Math.min(1, moveZ + touchMoveZ));
+
+  const moving = Math.abs(moveX) > 0.05 || Math.abs(moveZ) > 0.05;
+  let speed = keys['ShiftLeft'] || keys['ShiftRight'] ? SPRINT_SPEED : WALK_SPEED;
+
+  if (moving) {
+    const len = Math.hypot(moveX, moveZ);
+    moveX /= len; moveZ /= len;
+
+    const worldX = moveX * Math.cos(yaw) - moveZ * Math.sin(yaw);
+    const worldZ = moveX * Math.sin(yaw) + moveZ * Math.cos(yaw);
+
+    soldier.position.x += worldX * speed * dt;
+    soldier.position.z += worldZ * speed * dt;
+
+    const targetFacing = Math.atan2(worldX, worldZ);
+    let diff = targetFacing - soldier.rotation.y;
+    diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+    soldier.rotation.y += diff * Math.min(1, 12 * dt);
+
+    strideCycle += dt * (speed / WALK_SPEED) * 8;
+  } else {
+    strideCycle *= 0.9;
+  }
+
+  // Jump / gravity
+  if (keys['Space'] && grounded) {
+    velocityY = JUMP_SPEED;
+    grounded = false;
+  }
+  velocityY += GRAVITY * dt;
+  soldier.position.y += velocityY * dt;
+  if (soldier.position.y <= 0) {
+    if (!grounded) {
+      landingSquat = Math.min(1, Math.abs(velocityY) / JUMP_SPEED);
+    }
+    soldier.position.y = 0;
+    velocityY = 0;
+    grounded = true;
+  }
+
+  // Leg animation
+  const swing = Math.sin(strideCycle) * 0.55;
+  const swingOpp = Math.sin(strideCycle + Math.PI) * 0.55;
+
+  if (grounded) {
+    legL.rotation.x = swing;
+    legR.rotation.x = swingOpp;
+    legLLower.rotation.x = 0;
+    legRLower.rotation.x = 0;
+    
+    // Arms with improved sway (was 0.03, now 0.12 for more pronounced animation)
+    armR.rotation.set(-1.85 + swingOpp * 0.12, 0.1, 0.1);
+    armR.kneePivot.rotation.set(0.35, 0, 0);
+    armL.rotation.set(-1.8 + swing * 0.12, -0.15, -0.15);
+    armL.kneePivot.rotation.set(0.15, 0, 0);
+  }
+
+  // Bob when walking
+  const bob = moving && grounded ? Math.abs(Math.sin(strideCycle)) * 0.04 : 0;
+  torso.position.y = 1.22 + bob;
+  headGroup.position.y = 1.52 + bob;
+
+  // Head look — follows camera pitch slightly
+  headGroup.rotation.x = pitch * 0.15;
+
+  // Jump animation + crouch
+  const HIP_BEND_MAX = 0.55;
+  const KNEE_BEND_MAX = 1.0;
+
+  if (!grounded) {
+    const upPhase = Math.max(0, velocityY) / JUMP_SPEED;
+    const downPhase = Math.max(0, -velocityY) / JUMP_SPEED;
+
+    const hipBend = THREE.MathUtils.clamp(-0.45 * upPhase + 0.3 * Math.min(downPhase, 1), -HIP_BEND_MAX, HIP_BEND_MAX);
+    const kneeBend = THREE.MathUtils.clamp(0.8 * upPhase + 0.35 * Math.min(downPhase, 1), 0, KNEE_BEND_MAX);
+
+    legL.rotation.x = hipBend;
+    legR.rotation.x = hipBend;
+    legLLower.rotation.x = kneeBend;
+    legRLower.rotation.x = kneeBend;
+
+    // Recoil affects arm pitch when jumping
+    armR.rotation.set(-1.85 - upPhase * 0.08 - recoilAmount * 0.05, 0.1, 0.1);
+    armR.kneePivot.rotation.set(0.35, 0, 0);
+    armL.rotation.set(-1.8 - upPhase * 0.08, -0.15, -0.15);
+    armL.kneePivot.rotation.set(0.15, 0, 0);
+
+    torso.position.y = 1.22 - upPhase * 0.05;
+    headGroup.position.y = 1.52 - upPhase * 0.05;
+  } else {
+    // Landing squat with decay
+    landingSquat *= 0.82;
+    if (landingSquat > 0.01) {
+      const hipAdd = THREE.MathUtils.clamp(landingSquat * 0.5, 0, HIP_BEND_MAX);
+      const kneeAdd = THREE.MathUtils.clamp(landingSquat * 0.9, 0, KNEE_BEND_MAX);
+      legL.rotation.x = THREE.MathUtils.clamp(legL.rotation.x + hipAdd, -HIP_BEND_MAX, HIP_BEND_MAX);
+      legR.rotation.x = THREE.MathUtils.clamp(legR.rotation.x + hipAdd, -HIP_BEND_MAX, HIP_BEND_MAX);
+      legLLower.rotation.x = THREE.MathUtils.clamp(legLLower.rotation.x + kneeAdd, 0, KNEE_BEND_MAX);
+      legRLower.rotation.x = THREE.MathUtils.clamp(legRLower.rotation.x + kneeAdd, 0, KNEE_BEND_MAX);
+      torso.position.y -= landingSquat * 0.06;
+      headGroup.position.y -= landingSquat * 0.06;
+    }
+    
+    // Clear landing squat after decay is done
+    if (landingSquat < 0.01) landingSquat = 0;
+  }
+
+  updateCamera();
+
+  // Firing — with recoil
+  fireCooldown -= dt;
+  recoilAmount *= 0.85; // Decay recoil impulse
+  
+  if (firing && fireCooldown <= 0) {
+    fireCooldown = FIRE_RATE;
+    muzzleFlashTimer = 0.045;
+    spawnTracer();
+    recoilAmount = 0.3; // Recoil kick on firing
+  }
+  
+  if (muzzleFlashTimer > 0) {
+    muzzleFlashTimer -= dt;
+    muzzleFlash.visible = true;
+    muzzleFlash.rotation.z = Math.random() * Math.PI;
+    const s = 0.85 + Math.random() * 0.3;
+    muzzleFlash.scale.set(s, s, s);
+  } else {
+    muzzleFlash.visible = false;
+  }
+  
+  updateTracers(dt);
+
+  renderer.render(scene, camera);
+}
+
+animate();
+</script>
+</body>
+</html>
