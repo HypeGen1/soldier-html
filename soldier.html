@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Soldier — White Void</title>
+<title>Soldier — East German 1970s</title>
 <style>
-  html, body { margin: 0; padding: 0; overflow: hidden; background: #ffffff; height: 100%; }
+  html, body { margin: 0; padding: 0; overflow: hidden; background: #a8b8c8; height: 100%; }
   canvas { display: block; }
 
   #hud {
@@ -12,63 +12,81 @@
     top: 16px; left: 16px;
     font-family: 'Courier New', monospace;
     font-size: 12px;
-    color: #222;
-    background: rgba(255,255,255,0.85);
-    border: 1px solid #ccc;
-    padding: 10px 14px;
-    line-height: 1.6;
+    color: #111;
+    background: rgba(255,255,255,0.9);
+    border: 2px solid #333;
+    padding: 12px 16px;
+    line-height: 1.7;
     letter-spacing: 0.5px;
     pointer-events: none;
     user-select: none;
     z-index: 20;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   }
-  #hud b { color: #000; }
+  #hud b { color: #000; font-weight: bold; }
 
   #uniformSelect {
     position: fixed;
     top: 16px; right: 16px;
     font-family: 'Courier New', monospace;
     font-size: 12px;
-    color: #222;
-    background: rgba(255,255,255,0.85);
-    border: 1px solid #ccc;
-    padding: 8px 12px;
-    line-height: 1.4;
+    color: #111;
+    background: rgba(255,255,255,0.9);
+    border: 2px solid #333;
+    padding: 10px 14px;
+    line-height: 1.5;
     pointer-events: auto;
     user-select: none;
     z-index: 20;
     cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   }
   #uniformSelect button {
     display: block;
     margin: 4px 0;
-    padding: 4px 8px;
-    background: #f0f0f0;
-    border: 1px solid #999;
+    padding: 6px 10px;
+    background: #f5f5f5;
+    border: 1px solid #666;
     cursor: pointer;
     font-family: 'Courier New', monospace;
     font-size: 11px;
+    border-radius: 2px;
   }
-  #uniformSelect button:hover { background: #e0e0e0; }
-  #uniformSelect button.active { background: #4CAF50; color: #fff; }
+  #uniformSelect button:hover { background: #e8e8e8; }
+  #uniformSelect button.active { background: #2d5016; color: #fff; }
 
   #crosshair {
     position: fixed;
     top: 50%; left: 50%;
-    width: 6px; height: 6px;
-    margin: -3px 0 0 -3px;
+    width: 8px; height: 8px;
+    margin: -4px 0 0 -4px;
     border-radius: 50%;
-    background: rgba(0,0,0,0.35);
+    background: rgba(0,0,0,0.4);
     pointer-events: none;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.6);
+  }
+
+  #cameraInfo {
+    position: fixed;
+    bottom: 16px; left: 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    color: #555;
+    background: rgba(255,255,255,0.75);
+    border: 1px solid #999;
+    padding: 8px 12px;
+    pointer-events: none;
+    z-index: 15;
+    line-height: 1.5;
   }
 
   #clickCatcher {
     position: fixed; inset: 0;
     display: flex; align-items: center; justify-content: center;
-    background: rgba(255,255,255,0.9);
+    background: rgba(168,184,200,0.95);
     font-family: 'Courier New', monospace;
-    color: #333;
-    font-size: 14px;
+    color: #222;
+    font-size: 16px;
     cursor: pointer;
     z-index: 10;
     text-align: center;
@@ -179,18 +197,20 @@
 <div id="hud">
   <b>WASD</b> move &nbsp; <b>SHIFT</b> sprint &nbsp; <b>SPACE</b> jump<br>
   <b>MOUSE</b> look &nbsp; <b>RIGHT-CLICK</b> fire &nbsp; <b>ESC</b> release cursor<br>
-  <span style="color:#999;">(touch: joystick + drag to look + buttons)</span>
+  <b>Q</b>/<b>E</b> adjust camera distance &nbsp; <b>Z</b>/<b>X</b> tilt<br>
+  <span style="color:#999; font-size:11px;">(touch: joystick + drag to look + buttons)</span>
 </div>
 
 <div id="uniformSelect">
   <div style="margin-bottom: 6px; font-weight: bold; font-size: 10px;">UNIFORM</div>
-  <button class="active" data-uniform="0">Standard</button>
+  <button class="active" data-uniform="0">Combat</button>
   <button data-uniform="1">Armored</button>
   <button data-uniform="2">Officer</button>
 </div>
 
 <div id="crosshair"></div>
-<div id="clickCatcher">click to enter<br><span style="font-size:11px;color:#888;">(pointer lock — mouse controls camera)</span></div>
+<div id="cameraInfo"></div>
+<div id="clickCatcher">click to enter<br><span style="font-size:12px;color:#555;">(pointer lock — mouse controls camera)</span></div>
 
 <div id="mobileControls">
   <div id="joystickZone"><div id="joystickStick"></div></div>
@@ -207,15 +227,16 @@
 // SCENE / RENDERER / CAMERA
 // ============================================================================
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xffffff);
-scene.fog = new THREE.Fog(0xffffff, 20, 90);
+scene.background = new THREE.Color(0xa8b8c8);
+scene.fog = new THREE.Fog(0xa8b8c8, 35, 120);
 
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, precision: 'highp' });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.autoUpdate = true;
 document.body.appendChild(renderer.domElement);
 
 window.addEventListener('resize', () => {
@@ -227,73 +248,77 @@ window.addEventListener('resize', () => {
 // ============================================================================
 // LIGHTING
 // ============================================================================
-const hemi = new THREE.HemisphereLight(0xffffff, 0xdddddd, 0.9);
+const hemi = new THREE.HemisphereLight(0xd8e8f8, 0x8080a0, 1.0);
 scene.add(hemi);
 
-const sun = new THREE.DirectionalLight(0xffffff, 0.9);
-sun.position.set(15, 25, 10);
+const sun = new THREE.DirectionalLight(0xffffff, 1.0);
+sun.position.set(30, 40, 20);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
-sun.shadow.camera.left = -30;
-sun.shadow.camera.right = 30;
-sun.shadow.camera.top = 30;
-sun.shadow.camera.bottom = -30;
-sun.shadow.camera.far = 80;
+sun.shadow.camera.left = -50;
+sun.shadow.camera.right = 50;
+sun.shadow.camera.top = 50;
+sun.shadow.camera.bottom = -50;
+sun.shadow.camera.far = 150;
 sun.shadow.bias = -0.0015;
 scene.add(sun);
 
 // ============================================================================
-// GROUND — fading grid for depth cue
+// GROUND — detailed terrain
 // ============================================================================
-const groundGeo = new THREE.PlaneGeometry(400, 400);
-const groundMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, metalness: 0 });
+const groundGeo = new THREE.PlaneGeometry(500, 500);
+const groundMat = new THREE.MeshStandardMaterial({ 
+  color: 0x7a8d6f, 
+  roughness: 0.9, 
+  metalness: 0,
+  map: null
+});
 const ground = new THREE.Mesh(groundGeo, groundMat);
 ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
+ground.castShadow = false;
 scene.add(ground);
 
-const grid = new THREE.GridHelper(400, 160, 0xe4e4e4, 0xeeeeee);
-grid.position.y = 0.01;
-// Custom material for grid to fade with distance
-const gridMat = grid.material.clone();
-gridMat.fog = true;
-grid.material = gridMat;
-scene.add(grid);
+// Detailed grid
+const gridHelper = new THREE.GridHelper(500, 100, 0x5a6d4f, 0x7a8d6f);
+gridHelper.position.y = 0.02;
+scene.add(gridHelper);
 
 // ============================================================================
-// SOLDIER — multiple uniform variants
+// SOLDIER — East German NVA 1970s with extensive detail
 // ============================================================================
 const palette = {
-  skin:    0xC79A78,
+  skin: 0xd4a574,
   
-  // Variant 0: Standard (olive drab)
-  standard: {
-    uniform: 0x4B5320,
-    uniformDark: 0x3A4119,
-    helmet: 0x39421C,
-    webgear: 0x2E2E2E,
-    boots: 0x1C1C1C,
+  // East German olive (Feldgrau-style)
+  combat: {
+    uniform: 0x4a5a2a,
+    uniformDark: 0x3a4a1a,
+    helmet: 0x3d4a1f,
+    webgear: 0x2a2a2a,
+    boots: 0x1a1a1a,
+    insignia: 0xc4b040,
   },
   
-  // Variant 1: Armored (darker, more equipment)
   armored: {
-    uniform: 0x2a2f1f,
-    uniformDark: 0x1f2415,
-    helmet: 0x1a1f0f,
+    uniform: 0x323d1a,
+    uniformDark: 0x242e12,
+    helmet: 0x2a351f,
     webgear: 0x1a1a1a,
     boots: 0x0f0f0f,
+    insignia: 0xb8a030,
   },
   
-  // Variant 2: Officer (lighter, higher rank insignia)
   officer: {
-    uniform: 0x5a6030,
-    uniformDark: 0x464b20,
-    helmet: 0x4a5224,
+    uniform: 0x5a6a3a,
+    uniformDark: 0x4a5a2a,
+    helmet: 0x4d5a32,
     webgear: 0x3a3a3a,
     boots: 0x2a2a2a,
+    insignia: 0xd4c050,
   },
   
-  metal: 0x555555,
+  metal: 0x4a4a4a,
 };
 
 let currentUniformVariant = 0;
@@ -308,7 +333,21 @@ let muzzleFlash = null;
 
 function box(w, h, d, color, castShadow = true) {
   const geo = new THREE.BoxGeometry(w, h, d);
-  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.85, metalness: 0.05 });
+  const mat = new THREE.MeshStandardMaterial({ 
+    color, 
+    roughness: 0.8, 
+    metalness: 0.08,
+    side: THREE.FrontSide
+  });
+  const m = new THREE.Mesh(geo, mat);
+  m.castShadow = castShadow;
+  m.receiveShadow = true;
+  return m;
+}
+
+function cylinder(rTop, rBot, h, color, castShadow = true) {
+  const geo = new THREE.CylinderGeometry(rTop, rBot, h, 12);
+  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.8, metalness: 0.05 });
   const m = new THREE.Mesh(geo, mat);
   m.castShadow = castShadow;
   m.receiveShadow = true;
@@ -316,104 +355,158 @@ function box(w, h, d, color, castShadow = true) {
 }
 
 function createSoldier(uniformVariant = 0) {
-  // Remove old soldier if it exists
   if (soldier) scene.remove(soldier);
   
-  const colors = palette[['standard', 'armored', 'officer'][uniformVariant]];
-  
+  const colors = palette[['combat', 'armored', 'officer'][uniformVariant]];
   soldier = new THREE.Group();
 
-  // Torso
-  const chest = box(0.46, 0.34, 0.26, colors.uniform);
-  chest.position.y = 1.22;
+  // === LOWER TORSO ===
+  const hips = box(0.42, 0.22, 0.26, colors.uniform);
+  hips.position.y = 0.95;
+  soldier.add(hips);
+
+  // Combat belt with buckle
+  const belt = box(0.44, 0.10, 0.28, colors.webgear);
+  belt.position.y = 0.82;
+  soldier.add(belt);
+
+  const beltBuckle = box(0.06, 0.08, 0.02, 0x888888);
+  beltBuckle.position.set(0, 0.82, 0.14);
+  soldier.add(beltBuckle);
+
+  // === CHEST & TORSO ===
+  const chest = box(0.48, 0.38, 0.28, colors.uniform);
+  chest.position.y = 1.28;
   soldier.add(chest);
 
-  const waist = box(0.4, 0.26, 0.24, colors.uniform);
-  waist.position.y = 0.94;
-  soldier.add(waist);
+  // Pockets detail
+  const pocketL = box(0.08, 0.08, 0.03, colors.uniformDark);
+  pocketL.position.set(-0.14, 1.15, 0.14);
+  soldier.add(pocketL);
 
-  torso = chest;
+  const pocketR = box(0.08, 0.08, 0.03, colors.uniformDark);
+  pocketR.position.set(0.14, 1.15, 0.14);
+  soldier.add(pocketR);
 
-  // Chest webgear straps
-  const strapL = box(0.05, 0.36, 0.03, colors.webgear);
-  strapL.position.set(-0.09, 1.24, 0.13);
-  strapL.rotation.z = 0.3;
+  // Chest webbing straps (Y-harness style)
+  const strapL = box(0.06, 0.42, 0.03, colors.webgear);
+  strapL.position.set(-0.11, 1.22, 0.14);
+  strapL.rotation.z = 0.25;
   soldier.add(strapL);
-  
-  const strapR = box(0.05, 0.36, 0.03, colors.webgear);
-  strapR.position.set(0.09, 1.24, 0.13);
-  strapR.rotation.z = -0.3;
+
+  const strapR = box(0.06, 0.42, 0.03, colors.webgear);
+  strapR.position.set(0.11, 1.22, 0.14);
+  strapR.rotation.z = -0.25;
   soldier.add(strapR);
 
-  // Belt
-  const belt = box(0.42, 0.08, 0.26, colors.webgear);
-  belt.position.y = 0.81;
-  soldier.add(belt);
-  
-  // Pouch (variant detail)
+  // Magazine pouches (armored variant only)
   if (uniformVariant === 1) {
-    const pouch = box(0.08, 0.12, 0.08, colors.webgear);
-    pouch.position.set(0.15, 0.78, 0.12);
-    soldier.add(pouch);
+    for (let i = -1; i <= 1; i++) {
+      const pouch = box(0.09, 0.14, 0.08, colors.webgear);
+      pouch.position.set(i * 0.15, 0.95, 0.12);
+      soldier.add(pouch);
+    }
   }
 
-  // Head group
+  // Backpack (combat/armored)
+  if (uniformVariant !== 2) {
+    const backpack = box(0.3, 0.32, 0.16, colors.webgear);
+    backpack.position.set(0, 1.18, -0.2);
+    soldier.add(backpack);
+
+    const backpackStraps = [
+      { pos: [-0.08, 1.3, -0.2], rot: 0.2 },
+      { pos: [0.08, 1.3, -0.2], rot: -0.2 },
+    ];
+    for (const strap of backpackStraps) {
+      const s = box(0.05, 0.26, 0.02, colors.webgear);
+      s.position.set(...strap.pos);
+      s.rotation.z = strap.rot;
+      soldier.add(s);
+    }
+  }
+
+  // === HEAD ===
   headGroup = new THREE.Group();
-  headGroup.position.y = 1.52;
+  headGroup.position.y = 1.60;
   soldier.add(headGroup);
 
-  // Neck
-  const neck = box(0.14, 0.22, 0.14, palette.skin);
-  neck.position.y = -0.08;
+  const neck = box(0.14, 0.24, 0.15, palette.skin);
+  neck.position.y = -0.10;
   headGroup.add(neck);
 
-  const head = box(0.24, 0.26, 0.24, palette.skin);
-  head.position.y = 0.21;
+  const head = box(0.24, 0.28, 0.25, palette.skin);
+  head.position.y = 0.22;
   headGroup.add(head);
 
-  const jaw = box(0.2, 0.08, 0.22, palette.skin);
-  jaw.position.y = 0.09;
+  // Jaw with detail
+  const jaw = box(0.20, 0.10, 0.23, palette.skin);
+  jaw.position.y = 0.08;
   headGroup.add(jaw);
 
-  // Helmet with chinstrap detail
-  const helmet = box(0.29, 0.15, 0.28, colors.helmet);
-  helmet.position.y = 0.33;
-  headGroup.add(helmet);
+  // Chin detail
+  const chin = box(0.18, 0.04, 0.22, palette.skin);
+  chin.position.y = 0.02;
+  headGroup.add(chin);
 
-  const helmetBrim = box(0.31, 0.035, 0.32, colors.helmet);
-  helmetBrim.position.y = 0.26;
+  // === HELMET (Steel Helmet M56 style) ===
+  const helmetMain = box(0.30, 0.16, 0.30, colors.helmet);
+  helmetMain.position.y = 0.35;
+  headGroup.add(helmetMain);
+
+  const helmetBrim = box(0.33, 0.04, 0.34, colors.helmet);
+  helmetBrim.position.y = 0.27;
   headGroup.add(helmetBrim);
-  
-  // Chin strap detail (variant)
-  if (uniformVariant >= 1) {
-    const chinStrap = box(0.05, 0.04, 0.24, colors.webgear);
-    chinStrap.position.set(0, 0.07, 0.13);
-    headGroup.add(chinStrap);
+
+  // Back reinforcement
+  const helmetBack = box(0.32, 0.08, 0.08, colors.helmet);
+  helmetBack.position.set(0, 0.32, -0.18);
+  headGroup.add(helmetBack);
+
+  // Chin strap
+  const chinStrap = box(0.06, 0.05, 0.25, colors.webgear);
+  chinStrap.position.set(0, 0.10, 0.14);
+  headGroup.add(chinStrap);
+
+  // Red star insignia (NVA emblem)
+  if (uniformVariant < 2) {
+    const star = box(0.05, 0.05, 0.02, 0xcc3333);
+    star.position.set(0, 0.32, 0.15);
+    headGroup.add(star);
   }
 
-  // Arms
+  // === ARMS ===
   function makeArm(side) {
     const pivot = new THREE.Group();
-    pivot.position.set(side * 0.27, 1.38, 0);
+    pivot.position.set(side * 0.28, 1.38, 0);
 
-    const upper = box(0.13, 0.3, 0.15, colors.uniform);
-    upper.position.y = -0.15;
-    pivot.add(upper);
+    const shoulder = box(0.18, 0.12, 0.17, colors.uniform);
+    shoulder.position.y = 0.04;
+    pivot.add(shoulder);
+
+    const upperArm = box(0.13, 0.32, 0.16, colors.uniform);
+    upperArm.position.y = -0.18;
+    pivot.add(upperArm);
 
     const lowerPivot = new THREE.Group();
-    lowerPivot.position.y = -0.3;
+    lowerPivot.position.y = -0.35;
     pivot.add(lowerPivot);
 
-    const lower = box(0.12, 0.28, 0.14, colors.uniformDark);
-    lower.position.y = -0.14;
-    lowerPivot.add(lower);
+    const forearm = box(0.12, 0.30, 0.15, colors.uniformDark);
+    forearm.position.y = -0.15;
+    lowerPivot.add(forearm);
 
-    const hand = box(0.1, 0.1, 0.11, palette.skin);
-    hand.position.y = -0.3;
+    // Sleeve detail/cuff
+    const cuff = box(0.14, 0.06, 0.17, colors.webgear);
+    cuff.position.y = -0.32;
+    lowerPivot.add(cuff);
+
+    const hand = box(0.10, 0.12, 0.12, palette.skin);
+    hand.position.y = -0.32;
     lowerPivot.add(hand);
 
     const gripPoint = new THREE.Group();
-    gripPoint.position.y = -0.3;
+    gripPoint.position.y = -0.32;
     lowerPivot.add(gripPoint);
 
     pivot.kneePivot = lowerPivot;
@@ -425,26 +518,37 @@ function createSoldier(uniformVariant = 0) {
   armR = makeArm(1);
   soldier.add(armL, armR);
 
-  // Legs
+  // === LEGS ===
   function makeLeg(side) {
     const pivot = new THREE.Group();
-    pivot.position.set(side * 0.13, 0.81, 0);
+    pivot.position.set(side * 0.13, 0.82, 0);
 
-    const upper = box(0.15, 0.42, 0.17, colors.uniformDark);
-    upper.position.y = -0.21;
-    pivot.add(upper);
+    const thigh = box(0.16, 0.44, 0.18, colors.uniformDark);
+    thigh.position.y = -0.22;
+    pivot.add(thigh);
 
     const lowerPivot = new THREE.Group();
-    lowerPivot.position.y = -0.42;
+    lowerPivot.position.y = -0.44;
     pivot.add(lowerPivot);
 
-    const lower = box(0.13, 0.4, 0.15, colors.uniform);
-    lower.position.y = -0.2;
-    lowerPivot.add(lower);
+    const calf = box(0.14, 0.42, 0.16, colors.uniform);
+    calf.position.y = -0.21;
+    lowerPivot.add(calf);
 
-    const boot = box(0.155, 0.12, 0.24, colors.boots);
-    boot.position.set(0, -0.46, 0.03);
+    // Boot (high-top military style)
+    const boot = box(0.16, 0.14, 0.25, colors.boots);
+    boot.position.set(0, -0.48, 0.04);
     lowerPivot.add(boot);
+
+    // Boot heel/sole detail
+    const bootSole = box(0.17, 0.03, 0.26, 0x0a0a0a);
+    bootSole.position.set(0, -0.54, 0.04);
+    lowerPivot.add(bootSole);
+
+    // Boot laces detail
+    const laces = box(0.03, 0.12, 0.25, 0x3a3a3a);
+    laces.position.set(0, -0.48, 0.08);
+    lowerPivot.add(laces);
 
     pivot.kneePivot = lowerPivot;
     return pivot;
@@ -456,76 +560,98 @@ function createSoldier(uniformVariant = 0) {
   legRLower = legR.kneePivot;
   soldier.add(legL, legR);
 
-  // Rifle — proper submachine gun stance
+  // === RIFLE (East German AK derivative / MPiKM74 style) ===
   rifle = new THREE.Group();
 
-  const barrel = box(0.045, 0.045, 0.32, palette.metal);
-  barrel.position.set(0, 0.05, 0.34);
+  const barrel = box(0.048, 0.048, 0.34, 0x1a1a1a);
+  barrel.position.set(0, 0.06, 0.35);
   rifle.add(barrel);
 
-  const receiver = box(0.07, 0.09, 0.26, 0x2b2b2b);
-  receiver.position.set(0, 0.05, 0.06);
+  // Gas tube above barrel
+  const gasTube = cylinder(0.04, 0.04, 0.22, 0x2a2a2a);
+  gasTube.position.set(0, 0.14, 0.18);
+  rifle.add(gasTube);
+
+  const receiver = box(0.075, 0.10, 0.28, 0x1a1a1a);
+  receiver.position.set(0, 0.04, 0.08);
   rifle.add(receiver);
 
-  const magazine = box(0.045, 0.22, 0.05, 0x1f1f1f);
-  magazine.position.set(0, -0.12, 0.12);
-  magazine.rotation.x = 0.12;
+  // Magazine (curved, distinctive AK-style)
+  const magazine = box(0.052, 0.24, 0.055, 0x1a1a1a);
+  magazine.position.set(0, -0.14, 0.13);
+  magazine.rotation.x = 0.15;
   rifle.add(magazine);
 
-  const pistolGrip = box(0.05, 0.13, 0.05, 0x1f1f1f);
-  pistolGrip.position.set(0, -0.03, -0.02);
-  pistolGrip.rotation.x = -0.35;
+  // Charging handle
+  const charger = box(0.04, 0.05, 0.08, 0x2a2a2a);
+  charger.position.set(0.08, 0.08, 0.16);
+  rifle.add(charger);
+
+  // Pistol grip (curved)
+  const pistolGrip = box(0.06, 0.14, 0.06, 0x0f0f0f);
+  pistolGrip.position.set(0, -0.04, -0.01);
+  pistolGrip.rotation.x = -0.4;
   rifle.add(pistolGrip);
 
-  const stockBar = box(0.03, 0.03, 0.26, 0x555555);
-  stockBar.position.set(0, 0.02, -0.2);
-  rifle.add(stockBar);
-  
-  const stockPlate = box(0.03, 0.1, 0.03, 0x555555);
-  stockPlate.position.set(0, -0.03, -0.33);
+  // Stock (side-folding style)
+  const stockTube = box(0.035, 0.035, 0.28, 0x3a3a3a);
+  stockTube.position.set(0, 0.01, -0.18);
+  rifle.add(stockTube);
+
+  const stockPlate = box(0.035, 0.10, 0.04, 0x3a3a3a);
+  stockPlate.position.set(0, -0.02, -0.32);
   rifle.add(stockPlate);
 
-  // Muzzle flash with better glow
-  muzzleFlash = box(0.14, 0.14, 0.06, 0xffdd55, false);
+  // Muzzle brake detail
+  const muzzle = box(0.08, 0.08, 0.06, 0x222222);
+  muzzle.position.set(0, 0.06, 0.54);
+  rifle.add(muzzle);
+
+  // Muzzle flash
+  muzzleFlash = box(0.16, 0.16, 0.08, 0xffdd55, false);
   muzzleFlash.material.transparent = true;
   muzzleFlash.material.opacity = 0.95;
   muzzleFlash.material.emissive = new THREE.Color(0xffaa00);
-  muzzleFlash.material.emissiveIntensity = 2.0;
-  muzzleFlash.position.set(0, 0.05, 0.52);
+  muzzleFlash.material.emissiveIntensity = 2.5;
+  muzzleFlash.position.set(0, 0.06, 0.58);
   muzzleFlash.visible = false;
   rifle.add(muzzleFlash);
 
-  // Rifle positioning — corrected for proper aiming stance
-  rifle.position.set(0.02, -0.02, 0.04);
-  rifle.rotation.set(0.1, -0.05, 0.13); // Much flatter — barrel points forward
+  // Rifle positioning
+  rifle.position.set(0.03, -0.03, 0.05);
+  rifle.rotation.set(0.12, -0.06, 0.14);
   armR.gripPoint.add(rifle);
 
-  // Right arm: weapon-ready grip (raised, stock against shoulder)
-  armR.rotation.set(-1.85, 0.1, 0.1);
-  armR.kneePivot.rotation.set(0.35, 0, 0);
+  // === ARM & LEG POSITIONING (ready stance) ===
+  armR.rotation.set(-1.87, 0.12, 0.12);
+  armR.kneePivot.rotation.set(0.38, 0, 0);
 
-  // Left arm: foregrip, extended forward and slightly down
-  armL.rotation.set(-1.8, -0.15, -0.15);
-  armL.kneePivot.rotation.set(0.15, 0, 0);
+  armL.rotation.set(-1.82, -0.16, -0.16);
+  armL.kneePivot.rotation.set(0.16, 0, 0);
 
-  soldier.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  soldier.traverse(o => { 
+    if (o.isMesh) { 
+      o.castShadow = true; 
+      o.receiveShadow = true; 
+    } 
+  });
+
   soldier.position.set(0, 0, 0);
   scene.add(soldier);
 
-  // Contact shadow
-  const shadowBlobGeo = new THREE.CircleGeometry(0.4, 24);
-  const shadowBlobMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.18 });
-  const shadowBlob = new THREE.Mesh(shadowBlobGeo, shadowBlobMat);
+  // Shadow blob
+  const shadowGeo = new THREE.CircleGeometry(0.42, 24);
+  const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25 });
+  const shadowBlob = new THREE.Mesh(shadowGeo, shadowMat);
   shadowBlob.rotation.x = -Math.PI / 2;
-  shadowBlob.position.y = 0.015;
+  shadowBlob.position.y = 0.01;
   soldier.add(shadowBlob);
 }
 
-// Create initial soldier
 createSoldier(0);
 
 // ============================================================================
-// UNIFORM SELECTOR UI
+// UNIFORM SELECTOR
 // ============================================================================
 document.querySelectorAll('#uniformSelect button').forEach(btn => {
   btn.addEventListener('click', (e) => {
@@ -537,27 +663,40 @@ document.querySelectorAll('#uniformSelect button').forEach(btn => {
 });
 
 // ============================================================================
-// THIRD-PERSON CAMERA RIG
+// ADVANCED CAMERA RIG
 // ============================================================================
 let yaw = 0;
 let pitch = 0.35;
-const PITCH_MIN = 0.08;
-const PITCH_MAX = 1.3;
-const CAM_DISTANCE = 4.2;
-const CAM_HEIGHT_OFFSET = 1.1;
+const PITCH_MIN = 0.05;
+const PITCH_MAX = 1.4;
+
+let camDistance = 4.5;
+let camHeightOffset = 1.15;
+let camTiltX = 0;
+let camTiltZ = 0;
+
+const CAM_DISTANCE_MIN = 2.0;
+const CAM_DISTANCE_MAX = 12.0;
 
 function updateCamera() {
-  const dist = CAM_DISTANCE;
+  const dist = camDistance;
+  
+  // Spherical coordinates around soldier
   const camX = soldier.position.x - Math.sin(yaw) * Math.cos(pitch) * dist;
   const camZ = soldier.position.z - Math.cos(yaw) * Math.cos(pitch) * dist;
-  const camY = soldier.position.y + CAM_HEIGHT_OFFSET + Math.sin(pitch) * dist;
+  const camY = soldier.position.y + camHeightOffset + Math.sin(pitch) * dist;
+  
   camera.position.set(camX, camY, camZ);
+  
+  // Look-at target with slight bob
+  const lookTargetY = soldier.position.y + 1.05 + (Math.sin(strideCycle) * 0.02);
   camera.lookAt(
     soldier.position.x,
-    soldier.position.y + 1.0,
+    lookTargetY,
     soldier.position.z
   );
 }
+
 updateCamera();
 
 // ============================================================================
@@ -580,8 +719,8 @@ document.addEventListener('pointerlockchange', () => {
 
 document.addEventListener('mousemove', (e) => {
   if (document.pointerLockElement !== canvas) return;
-  yaw -= e.movementX * 0.0025;
-  pitch += e.movementY * 0.0025;
+  yaw -= e.movementX * 0.0028;
+  pitch += e.movementY * 0.0028;
   pitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, pitch));
 });
 
@@ -589,14 +728,24 @@ document.addEventListener('mousemove', (e) => {
 // INPUT STATE
 // ============================================================================
 const keys = {};
-window.addEventListener('keydown', (e) => { keys[e.code] = true; });
+window.addEventListener('keydown', (e) => { 
+  keys[e.code] = true;
+  
+  // Camera distance control
+  if (e.code === 'KeyQ') camDistance = Math.max(CAM_DISTANCE_MIN, camDistance - 0.4);
+  if (e.code === 'KeyE') camDistance = Math.min(CAM_DISTANCE_MAX, camDistance + 0.4);
+  
+  // Camera height tilt
+  if (e.code === 'KeyZ') camHeightOffset = Math.max(0.5, camHeightOffset - 0.15);
+  if (e.code === 'KeyX') camHeightOffset = Math.min(2.0, camHeightOffset + 0.15);
+});
 window.addEventListener('keyup', (e) => { keys[e.code] = false; });
 
 let touchMoveX = 0;
 let touchMoveZ = 0;
 
 // ============================================================================
-// MOBILE / TOUCH CONTROLS
+// MOBILE CONTROLS
 // ============================================================================
 const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 
@@ -605,7 +754,6 @@ if (isTouchDevice) {
   mobileControls.classList.add('active');
   clickCatcher.classList.add('hidden');
 
-  // Virtual joystick
   const joystickZone = document.getElementById('joystickZone');
   const joystickStick = document.getElementById('joystickStick');
   let joystickTouchId = null;
@@ -646,9 +794,7 @@ if (isTouchDevice) {
   joystickZone.addEventListener('touchstart', joystickStart, { passive: false });
   joystickZone.addEventListener('touchmove', joystickMove, { passive: false });
   joystickZone.addEventListener('touchend', joystickEnd, { passive: false });
-  joystickZone.addEventListener('touchcancel', joystickEnd, { passive: false });
 
-  // Look zone
   const lookZone = document.getElementById('lookZone');
   let lookTouchId = null;
   let lastLookX = 0, lastLookY = 0;
@@ -668,8 +814,8 @@ if (isTouchDevice) {
       const dy = touch.clientY - lastLookY;
       lastLookX = touch.clientX;
       lastLookY = touch.clientY;
-      yaw -= dx * 0.005;
-      pitch += dy * 0.005;
+      yaw -= dx * 0.006;
+      pitch += dy * 0.006;
       pitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, pitch));
       e.preventDefault();
     }
@@ -681,7 +827,6 @@ if (isTouchDevice) {
     }
   }, { passive: false });
 
-  // Buttons
   const jumpBtn = document.getElementById('jumpBtn');
   jumpBtn.addEventListener('touchstart', (e) => { keys['Space'] = true; e.preventDefault(); }, { passive: false });
   jumpBtn.addEventListener('touchend', (e) => { keys['Space'] = false; e.preventDefault(); }, { passive: false });
@@ -692,12 +837,12 @@ if (isTouchDevice) {
 }
 
 // ============================================================================
-// FIRING SYSTEM — with weapon recoil
+// FIRING SYSTEM
 // ============================================================================
 let firing = false;
-const FIRE_RATE = 0.09;
+const FIRE_RATE = 0.08;
 let fireCooldown = 0;
-let recoilAmount = 0; // recoil impulse that decays
+let recoilAmount = 0;
 
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 canvas.addEventListener('mousedown', (e) => {
@@ -711,26 +856,23 @@ if (isTouchDevice) {
   const fireBtn = document.getElementById('fireBtn');
   fireBtn.addEventListener('touchstart', (e) => { firing = true; e.preventDefault(); }, { passive: false });
   fireBtn.addEventListener('touchend', (e) => { firing = false; e.preventDefault(); }, { passive: false });
-  fireBtn.addEventListener('touchcancel', (e) => { firing = false; e.preventDefault(); }, { passive: false });
 }
 
-// Tracers with improved geometry
 const activeTracers = [];
 function spawnTracer() {
   const muzzleWorldPos = new THREE.Vector3();
   muzzleFlash.getWorldPosition(muzzleWorldPos);
 
   const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(rifle.getWorldQuaternion(new THREE.Quaternion()));
-  const jitter = 0.01;
+  const jitter = 0.015;
   forward.x += (Math.random() - 0.5) * jitter;
   forward.y += (Math.random() - 0.5) * jitter;
 
-  // Better tracer: thin box instead of cylinder
-  const tracerGeo = new THREE.BoxGeometry(0.016, 0.016, 0.5);
-  const tracerMat = new THREE.MeshBasicMaterial({ color: 0xfff2b0, transparent: true, opacity: 0.9 });
+  const tracerGeo = new THREE.BoxGeometry(0.018, 0.018, 0.6);
+  const tracerMat = new THREE.MeshBasicMaterial({ color: 0xffe080, transparent: true, opacity: 0.85 });
   const tracer = new THREE.Mesh(tracerGeo, tracerMat);
 
-  tracer.position.copy(muzzleWorldPos).addScaledVector(forward, 0.25);
+  tracer.position.copy(muzzleWorldPos).addScaledVector(forward, 0.3);
   tracer.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), forward);
 
   scene.add(tracer);
@@ -741,8 +883,8 @@ function updateTracers(dt) {
   for (let i = activeTracers.length - 1; i >= 0; i--) {
     const t = activeTracers[i];
     t.life += dt;
-    t.mesh.position.addScaledVector(t.dir, 40 * dt);
-    t.mesh.material.opacity = Math.max(0, 0.9 - t.life * 3);
+    t.mesh.position.addScaledVector(t.dir, 45 * dt);
+    t.mesh.material.opacity = Math.max(0, 0.85 - t.life * 2.8);
     if (t.life > 0.3) {
       scene.remove(t.mesh);
       t.mesh.geometry.dispose();
@@ -753,10 +895,10 @@ function updateTracers(dt) {
 }
 
 let muzzleFlashTimer = 0;
-const WALK_SPEED = 3.2;
-const SPRINT_SPEED = 6.0;
-const GRAVITY = -18;
-const JUMP_SPEED = 6.2;
+const WALK_SPEED = 3.4;
+const SPRINT_SPEED = 6.5;
+const GRAVITY = -20;
+const JUMP_SPEED = 6.5;
 
 let velocityY = 0;
 let grounded = true;
@@ -764,6 +906,19 @@ let strideCycle = 0;
 let landingSquat = 0;
 
 const clock = new THREE.Clock();
+
+function updateCameraInfo() {
+  const camInfo = document.getElementById('cameraInfo');
+  if (!camInfo) return;
+  
+  const dist = Math.sqrt(
+    Math.pow(camera.position.x - soldier.position.x, 2) +
+    Math.pow(camera.position.y - soldier.position.y, 2) +
+    Math.pow(camera.position.z - soldier.position.z, 2)
+  ).toFixed(1);
+  
+  camInfo.innerHTML = `CAM: ${dist}m | HEIGHT: ${camHeightOffset.toFixed(2)}`;
+}
 
 function animate() {
   requestAnimationFrame(animate);
@@ -795,11 +950,11 @@ function animate() {
     const targetFacing = Math.atan2(worldX, worldZ);
     let diff = targetFacing - soldier.rotation.y;
     diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-    soldier.rotation.y += diff * Math.min(1, 12 * dt);
+    soldier.rotation.y += diff * Math.min(1, 14 * dt);
 
     strideCycle += dt * (speed / WALK_SPEED) * 8;
   } else {
-    strideCycle *= 0.9;
+    strideCycle *= 0.88;
   }
 
   // Jump / gravity
@@ -819,8 +974,8 @@ function animate() {
   }
 
   // Leg animation
-  const swing = Math.sin(strideCycle) * 0.55;
-  const swingOpp = Math.sin(strideCycle + Math.PI) * 0.55;
+  const swing = Math.sin(strideCycle) * 0.62;
+  const swingOpp = Math.sin(strideCycle + Math.PI) * 0.62;
 
   if (grounded) {
     legL.rotation.x = swing;
@@ -828,81 +983,76 @@ function animate() {
     legLLower.rotation.x = 0;
     legRLower.rotation.x = 0;
     
-    // Arms with improved sway (was 0.03, now 0.12 for more pronounced animation)
-    armR.rotation.set(-1.85 + swingOpp * 0.12, 0.1, 0.1);
-    armR.kneePivot.rotation.set(0.35, 0, 0);
-    armL.rotation.set(-1.8 + swing * 0.12, -0.15, -0.15);
-    armL.kneePivot.rotation.set(0.15, 0, 0);
+    armR.rotation.set(-1.87 + swingOpp * 0.15, 0.12, 0.12);
+    armR.kneePivot.rotation.set(0.38, 0, 0);
+    armL.rotation.set(-1.82 + swing * 0.15, -0.16, -0.16);
+    armL.kneePivot.rotation.set(0.16, 0, 0);
   }
 
   // Bob when walking
-  const bob = moving && grounded ? Math.abs(Math.sin(strideCycle)) * 0.04 : 0;
-  torso.position.y = 1.22 + bob;
-  headGroup.position.y = 1.52 + bob;
+  const bob = moving && grounded ? Math.abs(Math.sin(strideCycle)) * 0.05 : 0;
+  torso.position.y = 1.28 + bob;
+  headGroup.position.y = 1.60 + bob;
 
-  // Head look — follows camera pitch slightly
-  headGroup.rotation.x = pitch * 0.15;
+  // Head look
+  headGroup.rotation.x = pitch * 0.12;
 
-  // Jump animation + crouch
-  const HIP_BEND_MAX = 0.55;
-  const KNEE_BEND_MAX = 1.0;
+  // Jump animation
+  const HIP_BEND_MAX = 0.6;
+  const KNEE_BEND_MAX = 1.1;
 
   if (!grounded) {
     const upPhase = Math.max(0, velocityY) / JUMP_SPEED;
     const downPhase = Math.max(0, -velocityY) / JUMP_SPEED;
 
-    const hipBend = THREE.MathUtils.clamp(-0.45 * upPhase + 0.3 * Math.min(downPhase, 1), -HIP_BEND_MAX, HIP_BEND_MAX);
-    const kneeBend = THREE.MathUtils.clamp(0.8 * upPhase + 0.35 * Math.min(downPhase, 1), 0, KNEE_BEND_MAX);
+    const hipBend = THREE.MathUtils.clamp(-0.5 * upPhase + 0.35 * Math.min(downPhase, 1), -HIP_BEND_MAX, HIP_BEND_MAX);
+    const kneeBend = THREE.MathUtils.clamp(0.9 * upPhase + 0.4 * Math.min(downPhase, 1), 0, KNEE_BEND_MAX);
 
     legL.rotation.x = hipBend;
     legR.rotation.x = hipBend;
     legLLower.rotation.x = kneeBend;
     legRLower.rotation.x = kneeBend;
 
-    // Recoil affects arm pitch when jumping
-    armR.rotation.set(-1.85 - upPhase * 0.08 - recoilAmount * 0.05, 0.1, 0.1);
-    armR.kneePivot.rotation.set(0.35, 0, 0);
-    armL.rotation.set(-1.8 - upPhase * 0.08, -0.15, -0.15);
-    armL.kneePivot.rotation.set(0.15, 0, 0);
+    armR.rotation.set(-1.87 - upPhase * 0.1 - recoilAmount * 0.06, 0.12, 0.12);
+    armL.rotation.set(-1.82 - upPhase * 0.1, -0.16, -0.16);
 
-    torso.position.y = 1.22 - upPhase * 0.05;
-    headGroup.position.y = 1.52 - upPhase * 0.05;
+    torso.position.y = 1.28 - upPhase * 0.06;
+    headGroup.position.y = 1.60 - upPhase * 0.06;
   } else {
-    // Landing squat with decay
-    landingSquat *= 0.82;
+    landingSquat *= 0.80;
     if (landingSquat > 0.01) {
-      const hipAdd = THREE.MathUtils.clamp(landingSquat * 0.5, 0, HIP_BEND_MAX);
-      const kneeAdd = THREE.MathUtils.clamp(landingSquat * 0.9, 0, KNEE_BEND_MAX);
+      const hipAdd = THREE.MathUtils.clamp(landingSquat * 0.55, 0, HIP_BEND_MAX);
+      const kneeAdd = THREE.MathUtils.clamp(landingSquat * 1.0, 0, KNEE_BEND_MAX);
       legL.rotation.x = THREE.MathUtils.clamp(legL.rotation.x + hipAdd, -HIP_BEND_MAX, HIP_BEND_MAX);
       legR.rotation.x = THREE.MathUtils.clamp(legR.rotation.x + hipAdd, -HIP_BEND_MAX, HIP_BEND_MAX);
       legLLower.rotation.x = THREE.MathUtils.clamp(legLLower.rotation.x + kneeAdd, 0, KNEE_BEND_MAX);
       legRLower.rotation.x = THREE.MathUtils.clamp(legRLower.rotation.x + kneeAdd, 0, KNEE_BEND_MAX);
-      torso.position.y -= landingSquat * 0.06;
-      headGroup.position.y -= landingSquat * 0.06;
+      torso.position.y -= landingSquat * 0.07;
+      headGroup.position.y -= landingSquat * 0.07;
     }
     
-    // Clear landing squat after decay is done
     if (landingSquat < 0.01) landingSquat = 0;
   }
 
   updateCamera();
+  updateCameraInfo();
 
-  // Firing — with recoil
+  // Firing
   fireCooldown -= dt;
-  recoilAmount *= 0.85; // Decay recoil impulse
+  recoilAmount *= 0.82;
   
   if (firing && fireCooldown <= 0) {
     fireCooldown = FIRE_RATE;
-    muzzleFlashTimer = 0.045;
+    muzzleFlashTimer = 0.04;
     spawnTracer();
-    recoilAmount = 0.3; // Recoil kick on firing
+    recoilAmount = 0.35;
   }
   
   if (muzzleFlashTimer > 0) {
     muzzleFlashTimer -= dt;
     muzzleFlash.visible = true;
     muzzleFlash.rotation.z = Math.random() * Math.PI;
-    const s = 0.85 + Math.random() * 0.3;
+    const s = 0.9 + Math.random() * 0.35;
     muzzleFlash.scale.set(s, s, s);
   } else {
     muzzleFlash.visible = false;
